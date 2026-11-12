@@ -1,11 +1,27 @@
 import { useEffect, useState } from 'react'
 import Markdown from 'react-markdown'
 import type { AskResult } from '../api/client'
-import { canSpeak, speak, stopSpeaking } from '../lib/speech'
+import { canSpeak, sayText, speak, stopSpeaking } from '../lib/speech'
 
 interface Props {
   result: AskResult
   onAskAgain: () => void
+}
+
+function NameRow({ label, name, lang, className }: { label: string; name: string; lang: 'th-TH' | 'en-US'; className: string }) {
+  return (
+    <div className="name-row">
+      <div>
+        <div className="name-label">{label}</div>
+        <div className={className} lang={lang.slice(0, 2)}>{name}</div>
+      </div>
+      {canSpeak && (
+        <button type="button" className="btn btn-say" onClick={() => sayText(name, lang)} aria-label={`ฟังเสียง ${label} ${name}`}>
+          🔊
+        </button>
+      )}
+    </div>
+  )
 }
 
 export default function AnswerCard({ result, onAskAgain }: Props) {
@@ -29,8 +45,19 @@ export default function AnswerCard({ result, onAskAgain }: Props) {
     <section className="card answer" aria-live="polite">
       <div className="species-box">
         <div className="species-label">ผลการตรวจ: น่าจะเป็น</div>
-        <div className="species-name">{identified ? result.species_name : 'ยังระบุชนิดไม่ได้'}</div>
-        {identified && result.scientific_name && <div className="species-sci">{result.scientific_name}</div>}
+        {identified ? (
+          <>
+            <NameRow label="ชื่อภาษาไทย" name={result.species_name} lang="th-TH" className="species-name" />
+            {result.english_name && (
+              <NameRow label="ชื่อภาษาอังกฤษ" name={result.english_name} lang="en-US" className="species-en" />
+            )}
+            {result.scientific_name && (
+              <div className="species-sci">ชื่อวิทยาศาสตร์: <i>{result.scientific_name}</i></div>
+            )}
+          </>
+        ) : (
+          <div className="species-name">ยังระบุชนิดไม่ได้</div>
+        )}
       </div>
 
       {result.verified && <p className="note note-verified">✔ คำตอบนี้ผู้เชี่ยวชาญตรวจสอบแล้ว</p>}

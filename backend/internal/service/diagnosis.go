@@ -24,6 +24,7 @@ type AskInput struct {
 type AskResult struct {
 	ID             string   `json:"id"`
 	SpeciesName    string   `json:"species_name"`    // ชนิดพืช/สัตว์ที่ AI ระบุ
+	EnglishName    string   `json:"english_name"`    // ชื่อภาษาอังกฤษ
 	ScientificName string   `json:"scientific_name"` // ชื่อวิทยาศาสตร์
 	Answer         string   `json:"answer"`
 	Keywords       []string `json:"keywords"`
@@ -60,6 +61,7 @@ func (s *DiagnosisService) Ask(ctx context.Context, in AskInput) (*AskResult, er
 			return &AskResult{
 				ID:             match.ID,
 				SpeciesName:    deref(match.SpeciesName),
+				EnglishName:    deref(match.EnglishName),
 				ScientificName: deref(match.ScientificName),
 				Answer:         match.AIAnswer,
 				Keywords:       match.Keywords,
@@ -93,6 +95,7 @@ func (s *DiagnosisService) Ask(ctx context.Context, in AskInput) (*AskResult, er
 		Keywords:       keywords,
 		Species:        ptr(species),
 		SpeciesName:    ptr(strings.TrimSpace(d.SpeciesName)),
+		EnglishName:    ptr(strings.TrimSpace(d.EnglishName)),
 		ScientificName: ptr(strings.TrimSpace(d.ScientificName)),
 		ImageURL:       imageURL,
 		AIAnswer:       d.Answer,
@@ -104,6 +107,7 @@ func (s *DiagnosisService) Ask(ctx context.Context, in AskInput) (*AskResult, er
 	return &AskResult{
 		ID:             c.ID,
 		SpeciesName:    deref(c.SpeciesName),
+		EnglishName:    deref(c.EnglishName),
 		ScientificName: deref(c.ScientificName),
 		Answer:         d.Answer,
 		Keywords:       keywords,

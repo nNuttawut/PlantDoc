@@ -20,6 +20,7 @@ type Consultation struct {
 	Keywords       []string  `json:"keywords"`
 	Species        *string   `json:"species"`         // general name used for matching, e.g. "ข้าว"
 	SpeciesName    *string   `json:"species_name"`    // AI-identified name, e.g. "ข้าวหอมมะลิ"
+	EnglishName    *string   `json:"english_name"`    // e.g. "Rice"
 	ScientificName *string   `json:"scientific_name"` // e.g. "Oryza sativa"
 	AIAnswer       string    `json:"answer"`
 	IsVerified     bool      `json:"is_verified"`
@@ -36,12 +37,12 @@ func NewConsultationRepo(db *pgxpool.Pool) *ConsultationRepo {
 }
 
 const selectCols = `id::text, user_id::text, question_text, image_url, COALESCE(keywords, '{}'),
-	species, species_name, scientific_name, ai_answer, COALESCE(is_verified, false), created_at, updated_at`
+	species, species_name, english_name, scientific_name, ai_answer, COALESCE(is_verified, false), created_at, updated_at`
 
 func scan(row pgx.Row) (*Consultation, error) {
 	var c Consultation
 	err := row.Scan(&c.ID, &c.UserID, &c.QuestionText, &c.ImageURL, &c.Keywords,
-		&c.Species, &c.SpeciesName, &c.ScientificName, &c.AIAnswer, &c.IsVerified, &c.CreatedAt, &c.UpdatedAt)
+		&c.Species, &c.SpeciesName, &c.EnglishName, &c.ScientificName, &c.AIAnswer, &c.IsVerified, &c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -77,10 +78,10 @@ func (r *ConsultationRepo) FindBestMatch(ctx context.Context, species string, ke
 func (r *ConsultationRepo) Create(ctx context.Context, c *Consultation) error {
 	return r.db.QueryRow(ctx, `
 		INSERT INTO public.consultations
-			(user_id, question_text, image_url, keywords, species, species_name, scientific_name, ai_answer)
-		VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8)
+			(user_id, question_text, image_url, keywords, species, species_name, english_name, scientific_name, ai_answer)
+		VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id::text, COALESCE(is_verified, false), created_at, updated_at`,
-		c.UserID, c.QuestionText, c.ImageURL, c.Keywords, c.Species, c.SpeciesName, c.ScientificName, c.AIAnswer,
+		c.UserID, c.QuestionText, c.ImageURL, c.Keywords, c.Species, c.SpeciesName, c.EnglishName, c.ScientificName, c.AIAnswer,
 	).Scan(&c.ID, &c.IsVerified, &c.CreatedAt, &c.UpdatedAt)
 }
 

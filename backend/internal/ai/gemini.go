@@ -234,6 +234,7 @@ func (g *Gemini) ExtractKeywords(ctx context.Context, question string, img *Imag
 // Diagnosis is the full AI analysis.
 type Diagnosis struct {
 	SpeciesName    string `json:"species_name"`    // ชื่อไทย เช่น "ข้าว", "ทุเรียนหมอนทอง"
+	EnglishName    string `json:"english_name"`    // เช่น "Rice", "Monthong durian"
 	ScientificName string `json:"scientific_name"` // เช่น "Oryza sativa"
 	Answer         string `json:"answer"`          // Markdown
 }
@@ -244,6 +245,7 @@ func (g *Gemini) Diagnose(ctx context.Context, question string, img *Image) (*Di
 ตอบเป็น JSON:
 - species_name: ระบุว่าเป็นพืช/สัตว์ชนิดอะไร เป็นชื่อภาษาไทย (ระบุสายพันธุ์ได้ถ้ามั่นใจ เช่น "ทุเรียนหมอนทอง")
   ถ้าระบุไม่ได้ให้เป็น "ไม่สามารถระบุได้"
+- english_name: ชื่อสามัญภาษาอังกฤษ เช่น "Rice", "Durian", "Dairy cow" ถ้าไม่ทราบให้เป็น ""
 - scientific_name: ชื่อวิทยาศาสตร์ เช่น "Oryza sativa" ถ้าไม่ทราบให้เป็น ""
 - answer: คำตอบภาษาไทย Markdown กระชับ ใช้ภาษาง่ายเหมือนพูดกับผู้สูงอายุ เลี่ยงศัพท์เทคนิค
   (ถ้าจำเป็นต้องใช้ให้อธิบายสั้นๆ) ใช้ข้อสั้นๆ ไม่เกิน 3-4 ข้อต่อหัวข้อ
@@ -267,10 +269,11 @@ func (g *Gemini) Diagnose(ctx context.Context, question string, img *Image) (*Di
 			"type": "OBJECT",
 			"properties": map[string]any{
 				"species_name":    map[string]any{"type": "STRING"},
+				"english_name":    map[string]any{"type": "STRING"},
 				"scientific_name": map[string]any{"type": "STRING"},
 				"answer":          map[string]any{"type": "STRING"},
 			},
-			"required": []string{"species_name", "scientific_name", "answer"},
+			"required": []string{"species_name", "english_name", "scientific_name", "answer"},
 		},
 	})
 	if err != nil {

@@ -55,7 +55,7 @@ func main() {
 		repository.NewConsultationRepo(db),
 		uploader,
 	)
-	h := handler.New(svc, cfg.MaxUploadMB)
+	h := handler.New(svc, cfg.MaxUploadMB, db.Ping, cfg.AskPerMinute)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

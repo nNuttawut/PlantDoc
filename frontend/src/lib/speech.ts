@@ -55,3 +55,18 @@ export function speak(markdown: string, onEnd: () => void) {
 export function stopSpeaking() {
   if (canSpeak) window.speechSynthesis.cancel()
 }
+
+// Read a short text (e.g. a species name) in the given language.
+export function sayText(text: string, lang: 'th-TH' | 'en-US', onEnd?: () => void) {
+  if (!canSpeak || !text) return
+  window.speechSynthesis.cancel()
+  const u = new SpeechSynthesisUtterance(text)
+  u.lang = lang
+  u.rate = 0.85
+  const prefix = lang.slice(0, 2)
+  const voice = window.speechSynthesis.getVoices().find((v) => v.lang.replace('_', '-').startsWith(prefix))
+  if (voice) u.voice = voice
+  u.onend = () => onEnd?.()
+  u.onerror = () => onEnd?.()
+  window.speechSynthesis.speak(u)
+}

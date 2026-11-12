@@ -41,8 +41,8 @@ frontend/
 ## API
 | Method | Path | หมายเหตุ |
 |---|---|---|
-| GET | `/api/health` | |
-| POST | `/api/ask` | multipart: `question` (text), `image` (file, ไม่บังคับ) |
+| GET | `/api/health` | เช็กทั้ง server และ DB — ใช้กับ UptimeRobot (ทุก 10 นาที) กัน Render/Supabase หลับ |
+| POST | `/api/ask` | multipart: `question` (text), `image` (file, ไม่บังคับ) — จำกัด `ASK_PER_MINUTE` ครั้ง/นาที/IP (default 5) |
 | GET | `/api/consultations?limit=20` | ประวัติการปรึกษาล่าสุด |
 
 ## เริ่มใช้งาน (local)

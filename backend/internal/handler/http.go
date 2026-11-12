@@ -2,6 +2,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/plantdoc/backend/internal/ai"
 	"github.com/plantdoc/backend/internal/service"
@@ -20,22 +22,33 @@ var allowedImageTypes = []string{"image/jpeg", "image/png", "image/webp", "image
 type Handler struct {
 	svc         *service.DiagnosisService
 	maxUploadMB int64
+	pingDB      func(context.Context) error
+	limiter     *RateLimiter
 }
 
-func New(svc *service.DiagnosisService, maxUploadMB int64) *Handler {
-	return &Handler{svc: svc, maxUploadMB: maxUploadMB}
+func New(svc *service.DiagnosisService, maxUploadMB int64, pingDB func(context.Context) error, askPerMinute int) *Handler {
+	return &Handler{svc: svc, maxUploadMB: maxUploadMB, pingDB: pingDB, limiter: NewRateLimiter(askPerMinute, askPerMinute)}
 }
 
 func (h *Handler) Routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", h.health)
-	mux.HandleFunc("POST /api/ask", h.ask)
+	mux.HandleFunc("POST /api/ask", h.limiter.Wrap(h.ask))
 	mux.HandleFunc("GET /api/consultations", h.recent)
 	return mux
 }
 
-func (h *Handler) health(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+// health also pings the database so an uptime monitor keeps both the app host
+// and the Supabase project from going idle.
+func (h *Handler) health(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	if err := h.pingDB(ctx); err != nil {
+		slog.Error("health: db ping failed", "err", err)
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "error", "db": "down"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "db": "ok"})
 }
 
 // ask accepts multipart/form-data with fields: question (text), image (file, optional).

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ask, wakeBackend, type AskResult } from './api/client'
 import AskForm from './components/AskForm'
 import AnswerCard from './components/AnswerCard'
+import DonateNote from './components/DonateNote'
 
 const WAIT_MESSAGES = [
   'กำลังดูรูปและอ่านอาการ…',
@@ -10,9 +11,13 @@ const WAIT_MESSAGES = [
   'ใกล้เสร็จแล้ว รอสักครู่นะครับ…',
 ]
 
+// After this long, show a gentle "slow today" note with a donation option.
+const SLOW_AFTER_MS = 10_000
+
 export default function App() {
   const [loading, setLoading] = useState(false)
   const [waitStep, setWaitStep] = useState(0)
+  const [slow, setSlow] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<AskResult | null>(null)
   const [formKey, setFormKey] = useState(0)
@@ -23,8 +28,13 @@ export default function App() {
   useEffect(() => {
     if (!loading) return
     setWaitStep(0)
+    setSlow(false)
     const t = setInterval(() => setWaitStep((s) => Math.min(s + 1, WAIT_MESSAGES.length - 1)), 6000)
-    return () => clearInterval(t)
+    const slowTimer = setTimeout(() => setSlow(true), SLOW_AFTER_MS)
+    return () => {
+      clearInterval(t)
+      clearTimeout(slowTimer)
+    }
   }, [loading])
 
   const scrollTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -66,6 +76,7 @@ export default function App() {
             <div className="spinner" aria-hidden />
             <p className="loading-text">{WAIT_MESSAGES[waitStep]}</p>
             <p className="hint">อาจใช้เวลาประมาณครึ่งนาที</p>
+            {slow && <DonateNote />}
           </div>
         )}
 

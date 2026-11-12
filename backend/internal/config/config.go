@@ -12,6 +12,7 @@ type Config struct {
 	Port           string
 	AllowedOrigins []string
 	MaxUploadMB    int64
+	AskPerMinute   int // per-IP rate limit for POST /api/ask
 
 	DatabaseURL string
 
@@ -38,6 +39,7 @@ func Load() (*Config, error) {
 		Port:           env("PORT", "8080"),
 		AllowedOrigins: splitList(env("ALLOWED_ORIGINS", "http://localhost:5173")),
 		MaxUploadMB:    int64(envInt("MAX_UPLOAD_MB", 5)),
+		AskPerMinute:   envInt("ASK_PER_MINUTE", 5),
 
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 
